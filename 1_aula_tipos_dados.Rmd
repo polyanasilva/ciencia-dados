@@ -1,0 +1,159 @@
+---
+title: "1_tipos_de_dados"
+author: "Polyana Silva"
+date: "2026-11-05"
+output: html_document
+---
+
+# Tipos de dados em R
+
+## Numeric (double)
+
+O tipo numeric representa os números reais. É amplamente utilizado em análises de expressão gênica e dados contínuos.
+
+```{r}
+pi <- 3.14
+class(pi)
+
+x <- 7000
+class(x)
+```
+
+## Integer
+
+Os inteiros, em R, são representados explicitamente com o sufixo L. São úteis em contagens, como número de mutações.
+
+```{r}
+y <- 10L
+class(y)
+```
+
+## Logical
+
+Representam condições verdadeiras ou falsas. Úteis em filtragem de dados, como seleção de features diferencialmente expressos.
+
+```{r}
+t <- TRUE
+class(t)
+
+f <- FALSE
+class(f)
+```
+
+## Complex
+
+Representa os números complexos, pouco utilizados na biologia.
+
+```{r}
+c <- 2 + 3i
+class(c)
+```
+
+# Vetores
+
+Vetor é uma sequência de elementos do mesmo tipo, permitindo operações simutâneas sobre todos os seus valores.
+
+## Criação de vetores
+
+```{r}
+v <- c(1, 2, 3, 4, 5)
+```
+
+## Geração de Sequências
+
+```{r}
+seq(1, 10, 2) # de 1 a 10, pulando de 2 em 2
+1:10          # sequencia simples de 1 a 10
+```
+
+## Repetição de Valores
+
+```{r}
+rep(1, times=5) # Repete o número 1 cinco vezes
+```
+
+# Operações com vetores
+
+Uma das vantagens de usar vetor é poder fazer operações vetorizadas, eliminando a necessidade de loops explícitos
+
+## Operações aritméticas
+
+```{r}
+v + 5
+v * 2
+v / 2
+v ^ 3
+```
+
+## Operações entre vetores
+
+```{r}
+v1 <- c(10, 20, 30)
+v2 <- c(3, 6, 9)
+
+v1 + v2
+v1 * v2
+```
+
+## Indexação
+A indexação permite acessar subconjuntos de dados
+```{r}
+v[1]      # primeiro elemento
+v[3:5]    # do terceiro à quinta
+v[v >= 2]  # elementos maior ou igual à 2
+```
+
+# Estatísticas básicas
+## Média
+```{r}
+# cálculo da soma
+sum(v)/length(v)
+
+# função mean()
+mean(v)
+```
+
+## Proporção
+```{r}
+sum(v > 2) / length(v)    # proporção de valores maiores que 2
+```
+
+## Variância
+```{r}
+var(v)
+```
+
+## Desvio padrão
+```{r}
+sd(v)
+```
+
+# Aplicação em Biologia
+## Frequência Alélica
+```{r}
+alelos <- c("A", "A", "a", "A", "a")
+freq_A <- sum(alelos == "A") / length(alelos)
+freq_A
+```
+
+## Expressão Gênica
+```{r}
+exp <- c(5.2, 12.5, 9.4, 7.3, 10.1)
+mean(exp)   # média
+sd(exp)     # variabilidade
+```
+
+## Proporção de Espécies
+```{r}
+especies <- c("sp1", "sp2", "sp1", "sp3", "sp1")
+prop_sp1 <- sum(especies == "sp1") / length(especies)
+prop_sp1
+```
+
+## Variabilidade Biológica
+```{r}
+dados <- c(5.2, 6.1, 5.8, 6.5, 5.9)
+var(dados)
+sd(dados)
+```
+
