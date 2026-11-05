@@ -1,0 +1,221 @@
+---
+title: "Dataframes em R: Estruturas tabulares e Aplicações"
+subtitle: "Disciplina: Ciência de Dados e Aplicações Biomédicas"
+author: "Professor: Gilderlano Santana Araújo"
+date: "`r Sys.Date()`" 
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: readable
+    highlight: tango
+---
+
+## 1. Introdução
+
+Um dataframe pode ser entendido como uma planilha, onde cada coluna é um vetor e pode possuir um tipo de dado diferente
+
+## 2. Criação de um Dataframe
+
+Dataframes podem ser criados manualmente a partir de vetores
+
+```{r criacao-dataframe}
+
+dados <- data.frame(
+  id = c(1, 2, 3, 4, 5, 6, 7),
+  sexo = c("M", "F", "F", "M", "F", "M", "F"),
+  expressao = c(10.5, 9.8, 11.2, 100.1, 9.6, 11.3, 2.2)
+)
+dados
+```
+
+## 3. Inspeção de Dados
+
+Antes de realizar análises, é fundamental explorar a estrutura dos dados
+
+### 3.1 Visualização
+
+```{r}
+head(dados)
+```
+
+```{r}
+tail(dados)
+```
+
+### 3.2 Estrutura
+
+```{r}
+# Exibe a estrutura interna do dataframe (tipos de colunas e dimensões)
+str(dados)
+```
+
+```{r}
+# Fornece um resumo estatístico das variáveis
+summary(dados)
+```
+
+Podemos notar que a função summary em uma coluna de dados numericos retorna um resumo estatístico e em uma coluna de
+
+## 4. Acesso a Dados
+
+### 4.1 Acesso por Coluna
+
+```{r}
+# Tem dois jeitos de ver o que tem em uma linha específica
+# Acesso direto pelo nome da coluna usando $
+dados$expressao
+
+# Acesso pelo nome da coluna usando colchetes duplos
+dados[["expressao"]]
+```
+
+```{r}
+dados$sexo
+```
+
+```{r}
+dados$id
+```
+
+```{r}
+exp <- dados$expressao
+# num (numerico) [1:7] (7 elementos nesse vetor e é indexado) e em seguida mostra os valores
+```
+
+### 4.2 Acesso por Linha e Coluna
+
+```{r}
+# Acessa apenas a primeira linha e todas as colunas
+dados[1, ]
+```
+
+```{r}
+# Todas as linhas da coluna expressao
+dados[, "expressao"]
+```
+
+```{r}
+# As linhas de 1 a 3, apenas das colunas sexo e expressao
+dados2 <- dados[1:3, c("sexo", "expressao")]
+dados2
+```
+
+```{r}
+# Todas as linhas apenas das colunas sexo e expressao
+dados[, c("sexo", "expressao")]
+```
+
+```{r}
+# query: quero saber qual é o sexo do id 2
+dados[2, "sexo"]
+```
+
+## 5. Filtragem 
+
+A filtragem permite selecionar subconjuntos de interesse
+
+```{r}
+# query: quero todos os dados de quem tem o sexo F
+dados[dados$sexo == "F", ]
+```
+
+```{r}
+dados[dados$sexo == "F" & dados$expressao > 10, ]
+```
+
+```{r}
+dados_masc = dados[dados$sexo == "M", ]
+dados_fem = dados[dados$sexo == "F", ]
+```
+
+```{r}
+#query: quero mostras apenas o id e sexo dos pacientes que tem expressao maior que 10
+dados[dados$expressao > 10, c("sexo", "id")]
+```
+
+```{r}
+# query: quero selecionar todas as colunas dos pacinetes que sao do sexo F e expressao maior ou igual a 10
+dados[dados$sexo == "F" & dados$expressao >= 10, ]
+```
+
+```{r}
+# query: quero selecionar apenas as coluna id dos pacientes que sao diferente do sexo F OU sao do grupo B
+dados[dados$sexo != "F" | dados$grupo == "B", ]
+```
+
+## 6. Modificação de Dataframes
+
+### 6.1 Adicionando colunas
+
+```{r}
+dados$grupo <- c("A", "A", "B", "B", "A", "B", "B")
+```
+
+### 6.2 Removendo Colunas
+
+```{r}
+dados$grupo <- NULL
+```
+
+### 6.3 Transformações
+
+```{r}
+dados$log_exp <- log(dados$expressao)
+```
+
+## 7. Operações Estatísticas
+
+### 7.1 Média por Coluna
+
+```{r}
+mean(dados$expressao)
+```
+
+```{r}
+median(dados$expressao)
+sd(dados$expressao)
+var(dados$expressao)
+```
+
+### 7.2 Agrupamento
+
+```{r}
+# query: quero saber a media da expressao por sexo
+tapply(dados$expressao, dados$sexo, mean)
+```
+
+```{r}
+tapply(dados$expressao, dados$grupo, sd)
+```
+
+## 8. Importação de Dados
+
+Dados reais são frequentemente carregados de arquivos externos
+
+```{r}
+dados <- read.csv("dados.csv")
+```
+
+## 9. Aplicações em Biologia
+
+### 9.1 Expressão Gênica
+
+```{r}
+genes <- data.frame(
+  gene = c("TP53", "BRCA1", "EGFR"),
+  expressao = c(12.5, 8.9, 15.2)
+)
+```
+
+### 9.2 Frequência Alélica
+
+```{r}
+snp <- data.frame(
+  id = c("rs1", "rs2", "rs3"), 
+  freq = c(0.2, 0.5, 0.8)
+)
+```
+
+### 9.3
