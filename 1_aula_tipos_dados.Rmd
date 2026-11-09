@@ -1,27 +1,35 @@
 ---
-title: "1_tipos_de_dados"
+title: "Tipos de Dados e Vetores em R"
 author: "Polyana Silva"
 date: "2026-11-05"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
 # Tipos de dados em R
+
+O R possui diferentes tipos de dados básicos. Abaixo estão os principais tipos atômicos, com exemplos aplicados ao contexto biológico.
 
 ## Numeric (double)
 
-O tipo numeric representa os números reais. É amplamente utilizado em análises de expressão gênica e dados contínuos.
+O tipo `numeric` representa os números reais. É amplamente utilizado em análises de expressão gênica e dados contínuos.
 
 ```{r}
+# Número com casas decimais (pi)
 pi <- 3.14
 class(pi)
 
+# Número inteiro tratado como numeric por padrão
 x <- 7000
 class(x)
 ```
 
 ## Integer
 
-Os inteiros, em R, são representados explicitamente com o sufixo L. São úteis em contagens, como número de mutações.
+Os inteiros, em R, são representados explicitamente com o sufixo `L`. São úteis em contagens, como número de mutações ou cópias gênicas.
 
 ```{r}
 y <- 10L
@@ -30,28 +38,29 @@ class(y)
 
 ## Logical
 
-Representam condições verdadeiras ou falsas. Úteis em filtragem de dados, como seleção de features diferencialmente expressos.
+Representam valores lógicos: `TRUE` (verdadeiro) ou `FALSE` (falso). Úteis em filtragem de dados, como seleção de features diferencialmente expressas.
 
 ```{r}
-t <- TRUE
+t_val <- TRUE
 class(t)
 
-f <- FALSE
+f_val <- FALSE
 class(f)
 ```
 
 ## Complex
 
-Representa os números complexos, pouco utilizados na biologia.
+Representam números complexos (com parte real e imaginária), sendo pouco usuais na biologia básica, mas presentes em modelagens matemáticas avançadas.
 
 ```{r}
-c <- 2 + 3i
-class(c)
+z <- 2 + 3i
+class(z)
 ```
 
+---
 # Vetores
 
-Vetor é uma sequência de elementos do mesmo tipo, permitindo operações simutâneas sobre todos os seus valores.
+Trata-se de uma sequência de elementos **do mesmo tipo**, permitindo operações simultâneas sobre todos os seus valores (vetorização).
 
 ## Criação de vetores
 
@@ -63,7 +72,7 @@ v <- c(1, 2, 3, 4, 5)
 
 ```{r}
 seq(1, 10, 2) # de 1 a 10, pulando de 2 em 2
-1:10          # sequencia simples de 1 a 10
+1:10          # sequencia simples de 1 a 10, passo 1
 ```
 
 ## Repetição de Valores
@@ -72,6 +81,7 @@ seq(1, 10, 2) # de 1 a 10, pulando de 2 em 2
 rep(1, times=5) # Repete o número 1 cinco vezes
 ```
 
+---
 # Operações com vetores
 
 Uma das vantagens de usar vetor é poder fazer operações vetorizadas, eliminando a necessidade de loops explícitos
@@ -79,10 +89,10 @@ Uma das vantagens de usar vetor é poder fazer operações vetorizadas, eliminan
 ## Operações aritméticas
 
 ```{r}
-v + 5
-v * 2
-v / 2
-v ^ 3
+v + 5           # soma 5 a cada elemento
+v * 2           # multiplica cada elementos por 2
+v / 2           # divide cada elementos por 2
+v ^ 3           # eleva cada elementos ao cubo
 ```
 
 ## Operações entre vetores
@@ -91,12 +101,14 @@ v ^ 3
 v1 <- c(10, 20, 30)
 v2 <- c(3, 6, 9)
 
-v1 + v2
-v1 * v2
+v1 + v2         # soma elemento a elemento
+v1 * v2         # multiplica elemento a elemento
 ```
 
 ## Indexação
-A indexação permite acessar subconjuntos de dados
+
+A indexação permite acessar subconjuntos específicos de um vetor usando colchetes `[]`
+
 ```{r}
 v[1]      # primeiro elemento
 v[3:5]    # do terceiro à quinta
@@ -104,32 +116,36 @@ v[v >= 2]  # elementos maior ou igual à 2
 ```
 
 # Estatísticas básicas
+
+O R possui funções nativas altamente otimizadas para estatística descritiva.
+
 ## Média
+
 ```{r}
-# cálculo da soma
+# cálculo manual (soma divida pela quantidade de elementos)
 sum(v)/length(v)
 
-# função mean()
+# utilizando a função nativa mean()
 mean(v)
 ```
 
 ## Proporção
+
 ```{r}
 sum(v > 2) / length(v)    # proporção de valores maiores que 2
 ```
 
-## Variância
-```{r}
-var(v)
-```
+## Variância e Desvio Padrão
 
-## Desvio padrão
 ```{r}
-sd(v)
+var(v)    # variância
+sd(v)     # desvio padrão
 ```
-
+---
 # Aplicação em Biologia
+
 ## Frequência Alélica
+
 ```{r}
 alelos <- c("A", "A", "a", "A", "a")
 freq_A <- sum(alelos == "A") / length(alelos)
@@ -137,13 +153,15 @@ freq_A
 ```
 
 ## Expressão Gênica
+
 ```{r}
 exp <- c(5.2, 12.5, 9.4, 7.3, 10.1)
-mean(exp)   # média
-sd(exp)     # variabilidade
+mean(exp)   # média de expressão
+sd(exp)     # variabilidade entre amostras
 ```
 
 ## Proporção de Espécies
+
 ```{r}
 especies <- c("sp1", "sp2", "sp1", "sp3", "sp1")
 prop_sp1 <- sum(especies == "sp1") / length(especies)
@@ -151,9 +169,9 @@ prop_sp1
 ```
 
 ## Variabilidade Biológica
-```{r}
-dados <- c(5.2, 6.1, 5.8, 6.5, 5.9)
-var(dados)
-sd(dados)
-```
 
+```{r}
+dados_biologicos <- c(5.2, 6.1, 5.8, 6.5, 5.9)
+var(dados_biologicos)
+sd(dados_biologicos)
+```
