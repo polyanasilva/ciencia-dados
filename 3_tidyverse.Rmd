@@ -1,0 +1,121 @@
+---
+title: "Tidyverse"
+subtitle: "Disciplina: Ciência de Dados e Aplicações Biomédicas"
+author: 'Professor: Gilderlanio Santana'
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: readable
+    highlight: tango
+---
+
+## 1. Instalação e Carregamento
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+## 2. Manipulação de dados com dplr
+
+```{r}
+df <- read.csv("data/biodados.csv", row.names = 1)
+df
+```
+
+### A. Filtrando e selecionando
+
+```{r}
+genes_significativos <- df %>%
+  filter(p_valor < 0.05) %>%
+  filter(p_valor > 0.001) %>%
+  select(gene, tipo, p_valor)
+
+genes_significativos
+```
+
+```{r}
+genes_significativos_supressores <- df %>%
+  filter(p_valor < 0.05, tipo == "Supressor") %>%
+  select(gene, tipo, p_valor)
+
+genes_significativos_supressores
+```
+
+```{r}
+oncogenes <- df %>%
+  filter(tipo == "Oncogene")
+
+oncogenes
+```
+
+### B. Criando novas variáveis
+
+```{r}
+dados_transformados <- df %>%
+  mutate(
+    fold_change = amostra_tratada / amostra_controle,
+    log2FC = log2(fold_change),
+    significativo = if_else(p_valor < 0.05, "Sim", "Não")
+  )
+dados_transformados
+```
+
+## 3. Remodelagem de dados
+
+```{r}
+dados_longos <- df %>%
+  pivot_longer(
+    cols = c(amostra_controle, amostra_tratada),
+    names_to = "condicao",
+    values_to = "expressao"
+  )
+dados_longos
+```
+
+```{r}
+dados_longos <- df %>%
+  pivot_longer(
+    cols = c(amostra_controle, amostra_tratada),
+    names_to = "condicao",
+    values_to = "expressao"
+  ) %>%
+  mutate(condicao = str_remove(condicao, "amostra_")) # remove do nome das colunas o "amostra_"
+dados_longos
+```
+
+O mutate nós conseguimos nao apenas criar uma nova coluna como tambem, alterar uma coluna existente
+
+Com dados em formato longo, fica fácil calcular estatísticas descritivas por grupo
+
+```{r}
+resumo_por_tipo <- dados_longos %>%
+  group_by(tipo, condicao) %>%
+  summarize(
+    media_expressao = mean(expressao),
+    desvio_padrao = sd(expressao),
+    total_genes = n(),
+    .groups = "drop"
+  )
+
+resumo_por_tipo
+```
+
+```{r}
+resumo_por_tipo <- dados_longos %>%
+  group_by(tipo, condicao) %>%
+  summarize(
+    media_expressao = mean(expressao),
+    desvio_padrao = sd(expressao),
+    total_genes = n()
+  )
+
+resumo_por_tipo
+```
+
+```{r}
+sum(exp[exp > 10]) / length(exp)
+```
