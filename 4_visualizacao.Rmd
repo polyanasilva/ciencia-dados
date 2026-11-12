@@ -28,7 +28,7 @@ table(df$sexo)
 ## 2. Comparação de Duas amostras (Teste t / Wilcowon)
 
 ```{r}
-ggboxplot(
+p1 = ggboxplot(
   data = df,
   x = "grupo", #CATEGORICO
   y = "TP53", #NUMERICO
@@ -46,7 +46,7 @@ ggboxplot(
 ```
 
 ```{r}
-ggviolin(
+p2 = ggviolin(
   data = df,
   x = "grupo",
   y = "EGFR",
@@ -63,7 +63,7 @@ ggviolin(
 
 ```{r}
 
-ggdotplot(
+p3 = ggdotplot(
   data = df,
   x = "grupo",
   y = "BRCA1",
@@ -99,7 +99,7 @@ minhas_comparacoes = list(c("Tipo_A", "Tipo_B"), c("Tipo_A", "Tipo_C"), c("Tipo_
 
 
 ```{r}
-ggboxplot(
+p4 = ggboxplot(
   data = df,
   x = "tipo_tumoral", #CATEGORICO
   y = "EGFR", #NUMERICO
@@ -171,4 +171,15 @@ ggdensity(df,
           ylab = "Densidade")
 ```
 
+
+ao armazenar em uma variavel cada um desses plots 
+```{r}
+painel_final = ggarrange(p1, p2, p3, p4,
+                         label = c("A", "B", "C", "D"),
+                         ncol = 2, nrow = 2,
+                         common.legend = T,
+                         legend = "bottom")
+painel_final
+
+```
 
