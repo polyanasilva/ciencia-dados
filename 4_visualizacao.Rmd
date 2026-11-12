@@ -1,0 +1,160 @@
+---
+title: "4_visualizacao_dados"
+author: 'Professor: Gilderlanio Santana'
+date: "2026-11-12"
+output: html_document
+---
+
+# Visualização de dados
+```{r}
+library(ggpubr)
+
+PALETTE = c("#c6767d", "#7e889e")
+```
+
+
+## 1. Leitura de dados
+
+```{r}
+df = read.table("data/gene_expression.tab", header = T, sep = "\t")
+head(df)
+```
+
+```{r}
+# value_counts()
+table(df$sexo)
+```
+
+## 2. Comparação de Duas amostras (Teste t / Wilcowon)
+
+```{r}
+ggboxplot(
+  data = df,
+  x = "grupo", #CATEGORICO
+  y = "TP53", #NUMERICO
+  color = "grupo", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = PALETTE,
+  add = "jitter",
+  shape = "grupo",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Expressão de TP53 por Grupo",
+  xlab = "Grupo Experimental",
+  ylab = "Nível de Expressão do TP53"
+) + rremove("legend")
+  + stat_compare_means(method = "t.test", label.x = 1.3, label.y = 18)
+
+```
+
+```{r}
+ggviolin(
+  data = df,
+  x = "grupo",
+  y = "EGFR",
+  fill = "grupo",
+  palette = PALETTE,
+  add = "boxplot",
+  add.params = list(fill = "white"),
+  title = "Distrição da Expressão do EGFR",
+  xlab = "Grupo",
+  ylab = "Nível de Expressão"
+) + stat_compare_means(method = "wilcox.test", label.y = 32)
+
+```
+
+```{r}
+
+ggdotplot(
+  data = df,
+  x = "grupo",
+  y = "BRCA1",
+  fill = "grupo",
+  palette = "jco",
+  binwidth = 0.4,
+  dotsize = 1,
+  add.params = list(fill = "white"),
+  title = "Dot plot da Expressão do BRCA1",
+  xlab = "Grupo",
+  ylab = "Nível de Expressão"
+) + stat_compare_means(method = "t.test", label.x = 1.35)
+
+```
+```{r}
+ggdotplot(
+  data = df,
+  x = "grupo",
+  y = "BRCA1",
+  fill = "grupo",
+  palette = "jco",
+  binwidth = 0.5,
+  add.params = list(fill = "white"),
+  dotsize = 1,
+  title = "Dot plot da Expressão do BRCA1",
+  xlab = "Grupo",
+  ylab = "Nível de Expressão"
+) + stat_compare_means(method = "t.test", label.x = 1.35)
+```
+```{r}
+minhas_comparacoes = list(c("Tipo_A", "Tipo_B"), c("Tipo_A", "Tipo_C"), c("Tipo_B", "Tipo_C"))
+```
+
+
+```{r}
+ggboxplot(
+  data = df,
+  x = "tipo_tumoral", #CATEGORICO
+  y = "EGFR", #NUMERICO
+  color = "tipo_tumoral", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = "npg",
+  add = "jitter",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Expressão de EGFR entre os tipos tumorais",
+  xlab = "Grupo Experimental",
+  ylab = "Nível de Expressão"
+) + rremove("legend") +
+  stat_compare_means(method = "anova", label.y = 37, label.x = 0.87) +
+  stat_compare_means(comparisons = minhas_comparacoes, method = "t.test")
+```
+
+```{r}
+ggscatter(df,
+          x = "TP53",
+          y = "EGFR",
+          add = "reg.line",
+          conf.int = T,
+          color = "grupo",
+          palette = "jco",
+          shape = "grupo",
+          title = "Correlação entre Expressão de TP53 e EGFR") +
+  stat_cor(method = "pearson", label.x = 9.5, label.y = 32) +
+  rremove("legend.title")
+```
+```{r}
+ggscatter(df,
+          x = "TP53",
+          y = "EGFR",
+          add = "reg.line",
+          conf.int = T,
+          color = "grupo",
+          palette = "jco",
+          shape = "grupo",
+          facet.by = "grupo",
+          title = "Correlação entre Expressão de TP53 e EGFR") +
+  stat_cor(method = "pearson") +
+  rremove("legend.title")
+```
+```{r}
+ggbarplot(df,
+          x = "grupo",
+          y = "EGFR",
+          add = c("jitter", "mean_se"),
+          color = "sexo",
+          fill = "sexo",
+          palette = PALETTE,
+          position = position_dodge(0.8),
+          title = "Média de Expressão de TP53 por Grupo e Sexo",
+          xlab = "Grupo",
+          ylab = "Média de Expressão (+/- SE)") +
+  stat_compare_means(aes(group = sexo), label = "p.signif") +
+  rremove("legend.title")
+```
+
