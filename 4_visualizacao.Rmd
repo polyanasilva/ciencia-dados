@@ -157,4 +157,18 @@ ggbarplot(df,
   stat_compare_means(aes(group = sexo), label = "p.signif") +
   rremove("legend.title")
 ```
+```{r}
+ggdensity(df,
+          x = "TP53",
+          add = "mean",
+          rug = T,
+          color = "tipo_tumoral",
+          fill = "tipo_tumoral",
+          palette = "Set2",
+          facet.by = "grupo",
+          title = "Curva de densidade da Expressao de TP53",
+          xlab = "Expressão de TP53",
+          ylab = "Densidade")
+```
+
 
