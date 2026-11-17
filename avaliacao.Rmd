@@ -1,0 +1,292 @@
+---
+title: "Análise Exploratória de Parâmetros Clínicos do Escore SOFA em R"
+author: 'Polyana Silva de Araújo'
+date: "2026-11-17"
+output: html_document
+---
+
+# Análise Exploratória de Parâmetros Clínicos do Escore SOFA em R
+
+Os dados a seguir representam parâmetros fisiológicos e laboratoriais de pacientes monitorados para avaliação de disfunção orgânica pelo escore SOFA (Sequential Organ Failure Assessment), abrangendo seis sistemas: Respiratório (Pa02_Fi02 em mmHg), Coagulação (Plaquetas × 103/ μL), Hepático (Bilirrubina em mg/dL), Cardiovascular (PAM em mmHg e vasopressores/inotrópicos em μg/kg/min), Neurológico (Escala de Glasgow) e Renal ( Creatinina em mg/dL e Diurese em mL/24h).
+
+```{r}
+# importacao de bibliotecas
+library(tidyverse)
+library(ggpubr)
+```
+
+## Entendendo o dataset
+
+```{r}
+df = read.csv("data/SOFA_db.csv")
+df
+```
+
+### Inspeção da estrutura do dataset
+
+```{r}
+str(df)
+```
+- Podemos ver que o dataset contém 13 colunas, sendo a primeira coluna o ID do paciente, a segunda a Classificação desse paciente e as restantes colunas numéricas que representam os parâmetros  fisiológicos e laboratoriais de cada paciente.
+
+### Resumo estatístico
+
+```{r}
+summary(df)
+```
+- Podemos notar que as colunas Adrelina e Dopamina estão zeradas em todos os pacientes, logo não iremos incluir essas duas colunas nas analíses estatísticas.
+- Acima foi feito o resumo estatístico de todo o dataset, porém nesse caso é importante fazer a análise separando os pacientes a partir da sua classificação.
+- Irei verificar quais são as classificações desses pacientes e qual é a proporção de pacientes por classificação.
+
+```{r}
+table(df$Classificacao)
+```
+
+## Análise estatística por classificação
+
+Aqui queremos saber a média, a mediana, o intervalo interquartil (IQR), o mínimo e o máximo das variáveis numéricas, para isso irei 
+
+```{r}
+num_variaveis = c("PaO2_FiO2", "Plaquetas", "Bilirrubina", "PAM", "Noradrenalina", "Dobutamina", "Glasgow", "Creatinina", "Diurese")
+
+df_controlada <- df %>%
+  filter(Classificacao == "Controlada") %>%
+  select(num_variaveis)
+
+summary(df_controlada)
+```
+
+
+```{r}
+df_grave <- df %>%
+  filter(Classificacao == "Grave") %>% 
+  select(num_variaveis)
+
+summary(df_grave)
+```
+
+```{r}
+df_muitograve <- df %>%
+  filter(Classificacao == "Muito grave") %>% 
+  select(num_variaveis)
+
+summary(df_muitograve)
+```
+```{r}
+p1 = ggboxplot(
+  data = df,
+  x = "Classificacao", #CATEGORICO
+  y = "PaO2_FiO2", #NUMERICO
+  color = "Classificacao", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = "jco",
+  add = "jitter",
+  shape = "Classificacao",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Distribuição por Classificação") + rremove("legend")
+
+p2 = ggboxplot(
+  data = df,
+  x = "Classificacao", #CATEGORICO
+  y = "Plaquetas", #NUMERICO
+  color = "Classificacao", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = "jco",
+  add = "jitter",
+  shape = "Classificacao",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Distribuição por Classificação") + rremove("legend")
+
+p3 = ggboxplot(
+  data = df,
+  x = "Classificacao", #CATEGORICO
+  y = "Bilirrubina", #NUMERICO
+  color = "Classificacao", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = "jco",
+  add = "jitter",
+  shape = "Classificacao",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Distribuição por Classificação") + rremove("legend")
+
+p4 = ggboxplot(
+  data = df,
+  x = "Classificacao", #CATEGORICO
+  y = "PAM", #NUMERICO
+  color = "Classificacao", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = "jco",
+  add = "jitter",
+  shape = "Classificacao",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Distribuição por Classificação") + rremove("legend")
+
+p5 = ggboxplot(
+  data = df,
+  x = "Classificacao", #CATEGORICO
+  y = "Noradrenalina", #NUMERICO
+  color = "Classificacao", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = "jco",
+  add = "jitter",
+  shape = "Classificacao",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Distribuição por Classificação") + rremove("legend")
+
+painel_final = ggarrange(p1, p2, p3, p4,
+                         label = c("A", "B", "C", "D"),
+                         ncol = 2, nrow = 2,
+                         common.legend = T,
+                         legend = "bottom")
+painel_final
+
+```
+
+
+Insights iniciais:
+
+- podemos ver a média altera bastante entre a controle das outras classificações, principalmente nas colunas ("PaO2_FiO2", "Plaquetas", "Bilirrubina"). 
+
+Para facilitar a comparação entre cada coluna nas diferentes classificações irei posteriormente fazer um plot para ver como está a distribuição dos pacientes em cada variável.
+
+Agora irei verificar o desvio padrão
+
+```{r}
+resumo_por_tipo <- df %>% 
+  group_by(Classificacao) %>% 
+  summarize(
+    sd_PaO2_FiO2 = sd(PaO2_FiO2),
+    sd_Plaquetas = sd(Plaquetas),
+    sd_Bilirrubina = sd(Bilirrubina),
+    sd_PAM = sd(PAM),
+    sd_Creatinina = sd(Creatinina),
+    sd_Diurese = sd(Diurese)
+  )
+
+resumo_por_tipo
+```
+- Podemos notar que o desvio padrão é maior nos pacientes que possuem a classificação Controlada nas colunas (PaO2_FiO2, Plaquetas e PAM), representando maior dispersão dos dados nessas colunas em comparação com as outras classificações que em outras colunas, como Diurese, que a classificação Grave é a mais dispersa. 
+
+
+### Normalidade e valores extremos
+
+```{r}
+shapiro.test(df$PaO2_FiO2)
+```
+
+```{r}
+shapiro <- df %>% 
+  group_by(Classificacao) %>% 
+  summarize(
+    sd_PaO2_FiO2 = shapiro.test(PaO2_FiO2),
+    sd_Plaquetas = shapiro.test(Plaquetas),
+    sd_Bilirrubina = sd(Bilirrubina),
+    sd_PAM = sd(PAM),
+    sd_Creatinina = sd(Creatinina),
+    sd_Diurese = sd(Diurese)
+  )
+
+resumo_por_tipo
+```
+
+## Engenharia de variáveis
+
+```{r}
+df <- df %>% 
+  mutate(
+    Status_Renal = if_else(Creatinina >= 1.2 | Diurese < 500, "Alterado", "Normal")
+  )
+num_alterado = sum(df$Status_Renal == "Alterado")
+num_normal = sum(df$Status_Renal == "Normal")
+
+num_alterado / 500
+num_normal / 500
+
+```
+
+- A frequência absoluta e proporção é:
+  - Alterado: 351 pacientes (70,8%)
+  - Normal: 149 pacientes (29,8%)
+
+
+## Visualização Estatística com ggpubr
+
+```{r}
+p1 = ggdensity(df,
+          x = "PAM",
+          fill = "Classificacao",
+          facet.by = "Classificacao",
+          palette = "Set2",
+          rug = T,
+          add = "mean",
+          title = "Densidade de PAM por Classificação",
+          xlab = "PAM",
+          ylab = "Densidade",
+          ) + rremove("legend.title") + geom_vline(xintercept = 70)
+p1
+```
+
+```{r}
+ggboxplot(df,
+          x = "Status_Renal",
+          y = "Diurese",
+          color = "Status_Renal",
+          palette = "Set2",
+          add = "jitter") + rremove("legend") +
+  stat_compare_means(method = "wilcox.test", label.y = 37, label.x = 0.87)
+```
+
+## Correlação Clínica
+
+```{r}
+ggscatter(df,
+          x = "Creatinina",
+          y = "Diurese")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+p1 = ggboxplot(
+  data = df,
+  x = "Classificacao", #CATEGORICO
+  y = "PaO2_FiO2", #NUMERICO
+  color = "Classificacao", #deixa a cor diferente para cada X, porém se eu colocar uma coluna diferente para comparar tambem eu consigo colocar o noem de outra coluna aqui
+  palette = "jco",
+  add = "jitter",
+  shape = "Classificacao",
+  #combine =  T,  #fecha a parte de cima e do lado
+  title = "Expressão de TP53 por Grupo",
+  xlab = "Grupo Experimental",
+  ylab = "Nível de Expressão do TP53") + rremove("legend")
+
+p1
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+variaveis_numericas = c("PaO2_FiO2", "Plaquetas", "Bilirrubina", "PAM", "Noradrenalina", "Adrenalina", "Dopamina", "Dobutamina", "Glasgow", "Creatinina", "Diurese")
+```
