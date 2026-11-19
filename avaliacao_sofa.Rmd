@@ -1,0 +1,336 @@
+---
+title: "Análise Exploratória de Parâmetros Clínicos do Escore SOFA"
+subtitle: "Exercício Prático e Avaliativo - Estatística Descritiva e Visualização com ggpubr"
+author: "Polyana Silva"
+date: "2026-11-18"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: readable
+    highlight: tango
+---
+
+# Introdução
+
+## Contexto clínico
+
+Pacientes críticos, como os internados em unidades de terapia intensiva (UTI) por sepse, trauma ou grandes cirurgias, podem desenvolver disfunção orgânica, ou seja, um ou mais órgãos deixam de funcionar adequadamente. Essa disfunção pode atingir vários sistemas ao mesmo tempo e mudar rapidamente, por isso a equipe precisa acompanhar o paciente de forma contínua e objetiva.
+
+O desafio é que cada órgão é avaliado por exames diferentes, com unidades e escalas próprias. Olhar cada resultado isoladamente dificulta responder perguntas como "o quanto este paciente está grave?" e "quais órgãos estão comprometidos?"
+
+## O escore SOFA
+
+O **SOFA** (*Sequential Organ Failure Assessment*) foi criado para responder a essa pergunta (Vincent et al., 1996). Ele transforma os parâmetros de seis sistemas em uma pontuação de 0 (função normal) a 4 (disfunção grave) para cada sistema. A soma vai de 0 a 24 pontos, e quanto maior o valor, maior a disfunção orgânica.
+
+| Sistema | Parâmetro | 0 | 1 | 2 | 3 | 4 |
+|:----------|:----------|:---------:|:---------:|:---------:|:---------:|:---------:|
+| Respiratório | PaO2/FiO2 (mmHg) | ≥ 400 | \< 400 | \< 300 | \< 200 com suporte ventilatório | \< 100 com suporte ventilatório |
+| Coagulação | Plaquetas (×10³/µL) | ≥ 150 | \< 150 | \< 100 | \< 50 | \< 20 |
+| Hepático | Bilirrubina (mg/dL) | \< 1,2 | 1,2–1,9 | 2,0–5,9 | 6,0–11,9 | \> 12,0 |
+| Cardiovascular | PAM (mmHg) e fármacos (µg/kg/min) | PAM ≥ 70 | PAM \< 70 | Dopamina ≤ 5 ou dobutamina em qualquer dose | Dopamina \> 5, adrenalina ≤ 0,1 ou noradrenalina ≤ 0,1 | Dopamina \> 15, adrenalina \> 0,1 ou noradrenalina \> 0,1 |
+| Neurológico | Escala de Glasgow | 15 | 13–14 | 10–12 | 6–9 | \< 6 |
+| Renal | Creatinina (mg/dL) ou diurese (mL/24h) | \< 1,2 | 1,2–1,9 | 2,0–3,4 | 3,5–4,9 ou diurese \< 500 | \> 5,0 ou diurese \< 200 |
+
+# Dicionário de dados
+
+| Coluna | Sistema | Descrição | Unidade | Tipo |
+|:--------------|:--------------|:--------------|:--------------|:--------------|
+| ID |  | Código de identificação do paciente |  | Texto |
+| Classificacao |  | Categoria de gravidade: Controlada, Grave ou Muito grave |  | Texto |
+| PaO2_FiO2 | Respiratório | Relação entre a pressão arterial de oxigênio e a fração inspirada de oxigênio; valores baixos indicam pior oxigenação | mmHg | Numérico |
+| Plaquetas | Coagulação | Contagem de plaquetas no sangue; valores baixos indicam maior dificuldade de coagulação | ×10³/µL | Numérico |
+| Bilirrubina | Hepático | Bilirrubina no sangue; valores altos indicam pior função do fígado | mg/dL | Numérico |
+| PAM | Cardiovascular | Pressão arterial média; valores baixos indicam hipotensão | mmHg | Numérico |
+| Noradrenalina | Cardiovascular | Dose do vasopressor noradrenalina; 0 indica que o paciente não recebe o fármaco | µg/kg/min | Numérico |
+| Adrenalina | Cardiovascular | Dose do vasopressor adrenalina; 0 indica que o paciente não recebe o fármaco | µg/kg/min | Numérico |
+| Dopamina | Cardiovascular | Dose do vasopressor dopamina; 0 indica que o paciente não recebe o fármaco | µg/kg/min | Numérico |
+| Dobutamina | Cardiovascular | Dose do inotrópico dobutamina; 0 indica que o paciente não recebe o fármaco | µg/kg/min | Numérico |
+| Glasgow | Neurológico | Escala de Glasgow |  | Inteiro |
+| Creatinina | Renal | Creatinina no sangue; valores altos indicam pior função dos rins | mg/dL | Numérico |
+| Diurese | Renal | Volume de urina produzido em 24 horas; valores baixos indicam pior função dos rins | mL/24h | Numérico |
+
+# Parte 1 - Importação, Inspeção e Estatística Descritiva
+
+## 1. Carregamento e estrutura
+
+```{r}
+library(tidyverse)
+library(ggpubr)
+
+colors_sofa <- c("#AC498C", "#5C96C6", "#282250", "#4AC4DE", "#E8A5C8", "#F4EEF8")
+```
+
+```{r}
+df <- read.csv("data/SOFA_db.csv")
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+summary(df)
+```
+
+```{r}
+# quantidade de pacientes em cada classificação
+table(df$Classificacao)
+```
+
+-   O conjunto tem 500 pacientes e 13 colunas. A coluna ID identifica o paciente, Classificacao é categórica e as demais são numéricas.
+-   Os pacientes estão divididos em 250 "Controlada", 237 "Grave" e 13 "Muito grave".
+-   As colunas Adrenalina e Dopamina são zero em todos os pacientes, então não trazem informação.
+-   Noradrenalina e Dobutamina têm mediana 0, o que significa que a maioria dos pacientes não usa esses medicamentos.
+
+## 2. Tendência central e dispersão
+
+```{r}
+dados_longos <- df %>%
+  pivot_longer(
+    cols = c(PaO2_FiO2, Plaquetas, Bilirrubina, PAM, Creatinina, Diurese),
+    names_to = "variavel",
+    values_to = "valor"
+  )
+
+descritiva_total <- dados_longos %>%
+  group_by(variavel) %>%
+  summarize(
+    media   = mean(valor),
+    dp      = sd(valor),
+    mediana = median(valor),
+    iqr     = IQR(valor),
+    minimo  = min(valor),
+    maximo  = max(valor)
+  )
+
+descritiva_total
+```
+
+Como o dataset mistura pacientes controlados e graves, adicionei um agrupamento por classificação para comparar os diferentes grupos
+
+```{r}
+descritiva_classificacao <- dados_longos %>%
+  group_by(variavel, Classificacao) %>%
+  summarize(
+    media   = mean(valor),
+    dp      = sd(valor),
+    mediana = median(valor),
+    iqr     = IQR(valor),
+    minimo  = min(valor),
+    maximo  = max(valor)
+  )
+
+descritiva_classificacao
+```
+
+-   Todas as variáveis pioram de "Controlada" para "Muito grave":
+
+    -   PaO2_FiO2, Plaquetas, PAM e Diurese diminuem
+
+    -   Enquanto Bilirrubina e creatinina aumentam
+
+        Isso explica os desvios padrão e iqr altos quando todos os pacientes são analisados juntos.
+
+## 3. Normalidade e valores extremos
+
+Comparamos a média com a mediana e aplicamos o teste de Shapiro-Wilk em cada variável. Esse teste parte da hipótese nula de que os dados seguem distribuição normal, sendo a normalidade rejeitada quando p \< 0,05.
+
+```{r}
+normalidade <- dados_longos %>%
+  group_by(variavel) %>%
+  summarize(
+    media         = mean(valor),
+    mediana       = median(valor),
+    media_mediana = mean(valor) - median(valor),
+    p_shapiro     = shapiro.test(valor)$p.value
+  ) %>%
+  mutate(normal = if_else(p_shapiro > 0.05, "Sim", "Não"))
+
+normalidade
+```
+
+-   Nenhuma variável segue distribuição normal (todos os p \< 0,05).
+-   Bilirrubina, Creatinina e Plaquetas possuem a média acima da mediana, representando uma assimetria à direita.
+-   Diurese tem média abaixo da mediana, representando uma assimetria à esquerda
+-   PAM e PaO2_FiO2 têm média e mediana próximas.
+
+### Identificando os outliers
+
+Um valor é considerado outlier quando está acima de Q3 + 1,5 × IQR ou abaixo de Q1 − 1,5 × IQR.
+
+Para visualizar quais variáveis possuem outliers irei plotar um boxplot
+
+```{r, fig.width=10, fig.height=6}
+ggboxplot(dados_longos,
+          x = "variavel",
+          y = "valor",
+          color = "variavel",
+          facet.by = "variavel",
+          scales = "free",
+          title = "Boxplot das variáveis clínicas",
+          xlab = "Variáveis",
+          ylab = "Valor") +
+  rremove("legend")
+```
+
+Só Bilirrubina e Creatinina possuem outliers. Calculamos o limite e filtramos os pacientes:
+
+```{r}
+# Bilirrubina
+limite_bili <- quantile(df$Bilirrubina, 0.75) + 1.5 * IQR(df$Bilirrubina)
+limite_bili
+
+outliers_bili <- df %>%
+  filter(Bilirrubina > limite_bili) %>%
+  select(ID, Classificacao, Bilirrubina)
+
+outliers_bili
+table(outliers_bili$Classificacao)
+```
+
+```{r}
+# Creatinina
+limite_crea <- quantile(df$Creatinina, 0.75) + 1.5 * IQR(df$Creatinina)
+limite_crea
+
+outliers_crea <- df %>%
+  filter(Creatinina > limite_crea) %>%
+  select(ID, Classificacao, Creatinina)
+
+outliers_crea
+table(outliers_crea$Classificacao)
+```
+
+```{r}
+table(outliers_bili$Classificacao)
+table(outliers_crea$Classificacao)
+```
+
+```{r}
+intersect(outliers_bili$ID, outliers_crea$ID)
+```
+
+-   Bilirrubina tem 28 outliers (valores acima de 14,8 mg/dL), sendo 23 pacientes graves, 3 muito graves e 2 controlados. O maior valor é do paciente P285 (25,00 mg/dL).
+-   Creatinina tem 15 outliers (valores acima de 7,45 mg/dL), sendo 13 pacientes graves e 2 muito graves. O maior valor é do paciente P353 (9,94 mg/dL).
+-   Os pacientes P325 e P464, classificados como grave, são outliers nas duas variáveis ao mesmo tempo.
+
+## 4. Engenharia de variáveis: risco renal
+
+Pelo critério do SOFA, o paciente é "Alterado" se tiver Creatinina \>= 1.2 ou Diurese \< 500, e "Normal" caso contrário.
+
+```{r}
+df <- df %>%
+  mutate(Status_Renal = if_else(Creatinina >= 1.2 | Diurese < 500, "Alterado", "Normal"))
+```
+
+```{r}
+num_alterado = sum(df$Status_Renal == "Alterado")
+num_normal = sum(df$Status_Renal == "Normal")
+
+num_alterado / 500
+num_normal / 500
+```
+
+```{r}
+# Status renal dentro de cada classificação
+table(df$Classificacao, df$Status_Renal)
+```
+
+-   351 pacientes (70,2%) têm status renal alterado e 149 (29,8%) estão normais. A alteração renal acompanha a gravidade representada pela classificação
+
+# Parte 2 - Visualização Estatística com ggpubr
+
+## 5. Distribuição e densidade da PAM (ggdensity)
+
+```{r, fig.width=7, fig.height=4.5}
+p1 = ggdensity(df,
+          x = "PAM",
+          fill = "Classificacao",
+          facet.by = "Classificacao",
+          palette = colors_sofa,
+          rug = T,
+          add = "mean",
+          title = "Curva de densidade da PAM por Classificação",
+          xlab = "PAM (mmHg)",
+          ylab = "Densidade",
+          ) + rremove("legend") + geom_vline(xintercept = 70, color = "red")
+p1
+```
+
+A linha tracejada marca a média da PAM para cada grupo de pacientes e a linha vermelha marca o limiar crítico hipotensivo de 70 mmHg. Podemos visualizar aqui o que foi visto acima, a média da PAM tende a piorar (diminuir) de pacientes "Controlada" para "Muito grave".
+
+## 6. Diurese por status renal (ggboxplot)
+
+```{r, fig.width=6, fig.height=5}
+p2 = ggboxplot(df,
+          x = "Status_Renal",
+          y = "Diurese",
+          color = "Status_Renal",
+          palette = colors_sofa,
+          add = "jitter",
+          title = "Diurese por status renal",
+          xlab = "Status renal",
+          ylab = "Diurese (mL/24h)") +
+  rremove("legend") + 
+  stat_compare_means(method = "wilcox.test", label.y = 200, label.x = 0.81)
+
+p2
+```
+
+```{r}
+tapply(df$Diurese, df$Status_Renal, median)
+
+tapply(df$Diurese, df$Status_Renal, min)
+```
+
+-   O grupo "Alterado" tem diurese média menor (1119,6 mL/24h) que o grupo "Normal" (1510,1 mL/24h), e todos os pacientes com diurese abaixo de 803 mL/24h estão no grupo "Alterado".
+
+-   O teste de Wilcoxon mostra diferença significativa entre os grupos (p = 2,7 x 10⁻¹²).
+
+## 7. Correlação entre creatinina e diurese (ggscatter)
+
+```{r, fig.width=6.5, fig.height=5}
+p3 = ggscatter(df,
+                x = "Creatinina",
+                y = "Diurese",
+                add = "reg.line",
+                conf.int = TRUE,
+                cor.coef = TRUE,
+                cor.method = "pearson",
+                cor.coef.coord = c(5, 1500),
+                color = colors_sofa[1],
+                title = "Correlação entre Creatinina e Diurese",
+                xlab = "Creatinina (mg/dL)",
+                ylab = "Diurese (mL/24h)")
+
+p3
+```
+
+-   Podemos visualizar que há uma correlação negativa forte entre creatinina e diurese (R = −0,72, p \< 0,001), quanto maior a creatinina, menor a diurese, ou seja, menor o volume de urina em 24h, como se espera quando a função renal piora.
+
+-   A relação não é bem linear, os pontos formam três ou quatro grupos. Porém, o coeficiente de Pearson resume a direção da associação entre as duas variáveis.
+
+## 8. Painel multipainel (ggarrange)
+
+```{r, fig.width=12, fig.height=7}
+painel_final = ggarrange(p1, p2, p3,
+                          labels = c("A", "B", "C"),
+                          ncol = 2, nrow = 2)
+painel_final
+```
+
+**Figura:** (A) densidade da PAM por Classificação com a média e o limiar hipotensivo de 70 mmHg; (B) diurese por status renal com teste de Wilcoxon; (C) correlação de Pearson entre creatinina e diurese com reta de regressão e intervalo de confiança.
+
+# Conclusão
+
+-   A amostra tem 500 pacientes (250 controlados, 237 graves e 13 muito graves). Adrenalina e dopamina não são usadas por nenhum paciente.
+-   Nenhuma variável segue distribuição normal. Bilirrubina e Creatinina são assimétricas à direita por causa de valores extremos clínicos (28 e 15 outliers, quase todos de pacientes graves ou muito graves).
+-   70,2% dos pacientes têm função renal alterada pelo critério do SOFA, e a alteração acompanha a gravidade.
+-   A diurese é significativamente menor no grupo com alteração renal e tem correlação negativa forte com a creatinina (Pearson), o que é coerente com a fisiologia renal.
+
+# Referências
+
+-   Vincent JL, Moreno R, Takala J, et al. The SOFA (Sepsis-related Organ Failure Assessment) score to describe organ dysfunction/failure. *Intensive Care Medicine*. 1996;22(7):707-710.
