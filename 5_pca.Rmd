@@ -1,0 +1,195 @@
+---
+title: "5_PCA"
+author: 'Professor: Gilderlanio Santana'
+date: "2026-11-19"
+output: html_document
+---
+
+# PCA
+
+```{r}
+install.packages("kableExtra")
+
+library(FactoMineR)
+library(factoextra)
+library(kableExtra)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(knitr)
+
+colors_sofa <- c("#AC498C", "#5C96C6", "#282250", "#4AC4DE", "#E8A5C8", "#F4EEF8")
+
+```
+
+```{r}
+dados <- read.csv("data/SOFA_db.csv",
+                  stringsAsFactors = FALSE)
+dados
+```
+
+```{r}
+str(dados)
+```
+
+ID e Classificacao sao texto, entao é possui
+
+```{r}
+df <- dados %>% 
+  select(-ID, -Classificacao)
+
+var(df)
+```
+
+Como Adrenalina e Dopamina possuem a variância zerada, irei remover pois nao irá acrescentar nada para a análise
+
+```{r}
+df <- df %>% 
+  select(-Adrenalina, -Dopamina)
+
+vars_pca <- var(df)
+vars_pca
+```
+
+```{r}
+metadado <- dados %>% 
+  select(ID, Classificacao) %>% 
+  mutate(
+    Classificacao = factor(
+      Classificacao, levels = c(
+        "Controlada",
+        "Grave",
+        "Muito grave"
+      )
+    ),
+    MuitoGrave = Classificacao == "Muito grave"
+  )
+
+metadado
+```
+
+```{r}
+dados
+```
+
+## Análise de valores ausentes
+
+A presença de valores ausentes pode comprometer a analise multivariada
+
+```{r}
+missing <- data.frame(
+  Parametro = names(df),
+  Ausentes = colSums(is.na(df)),
+  Percentual = colMeans(is.na(df)) * 100
+)
+missing
+```
+
+A matriz nao possui nenhum valor ausente
+
+## Padronização dos parâmetros
+
+Como os parametros clinicos tem diferentes unidades e escalas da medida, sera realizado uma padronizacao utilizando a media como zero e desvio padrao igual a um.
+
+essa etapa evita que variaiveis com maior magnitude domine a analise
+
+```{r}
+pca_scaled <- scale(
+  df, 
+  center = T,
+  scale = T
+)
+
+summary(as.data.frame(pca_scaled))
+```
+
+## Análise de Componentes Principais
+
+```{r}
+res.pca <- PCA(
+  pca_scaled,
+  scale.unit = F,
+  graph = T
+)
+```
+
+```{r}
+res.pca
+```
+
+## Autovalores
+
+```{r}
+variancia <- as.data.frame(res.pca$eig)
+variancia
+```
+
+```{r}
+fviz_eig(
+  res.pca,
+  addlabels = T,
+  ylim = c(0,100),
+  barfill = "pink",
+  barcolor = "pink"
+) +
+  labs(
+    title = ""
+  ) +
+  theme_classic()
+```
+
+Podemos visualizar a dominancia do PC1,
+a contribuicao do pc2
+pode indicar a quatidade de componentes 
+```{r}
+fviz_pca_ind(
+  res.pca,
+  geom.ind = "point",
+  habillage = metadado$Classificacao,
+  addEllipses = T,
+  ellipse.type = "confidence",
+  palette = colors_sofa
+  )
+```
+```{r}
+fviz_contrib(
+  res.pca,
+  choice = "var",
+  axes = 1,
+  top = 9,
+  fill = colors_sofa[1]
+) + labs(
+  title = "Contribuições das variaveis para PC1",
+  x = "Parametros clinicos",
+  y = "Contr"
+)
+```
+```{r}
+fviz_contrib(
+  res.pca,
+  choice = "var",
+  axes = 2,
+  top = 9,
+  fill = colors_sofa[3]
+)
+```
+circulo de contribuicao
+
+```{r}
+fviz_pca_var(
+  res.pca,
+  col.var = "contrib",
+  gradient.cols = "jco",
+  repel = T
+)
+```
+
+```{r}
+fviz_pca_var(
+  res.pca,
+  col.var = "contrib",
+  gradient.cols = "jco",
+  repel = T,
+) + theme_classic()
+```
+
