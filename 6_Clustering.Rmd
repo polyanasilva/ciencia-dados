@@ -1,0 +1,131 @@
+---
+title: "Clustering"
+author: 'Professor: Gilderlanio Santana'
+date: "2026-11-24"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(knitr)
+library(gridExtra)
+```
+
+```{r}
+df <- read_table("data/gene_expression.tab")
+df
+```
+
+```{r}
+df_clean <- df %>% 
+  drop_na()
+
+df_clean
+```
+
+```{r}
+vars_num <- df_clean %>% 
+  select(TP53, BRCA1, EGFR) %>% 
+  
+  select(where(~ sd(., na.rm = T) > 0))
+
+vars_num
+```
+
+
+```{r}
+dados_scaled <- scale(vars_num)
+dados_scaled
+```
+```{r}
+row.names(dados_scaled) <- df_clean$id
+dados_scaled
+```
+## Determinar o numero ideal de clusters (k)
+
+Largura media da silhueta: é usado para identificar qual o valor de k maximiza a coesao interna e a separacao entre os grupos
+hcut calcula a variancia interna dentro do cluster, silhouette é o metodo para avaliar os clusters, e determinamos o kmax
+
+```{r}
+k_max <- 10
+
+p1 <- fviz_nbclust(dados_scaled, FUNcluster = hcut, method = "silhouette", k.max = k_max) +labs(title = "Silhueta Média - Hierárquico",
+        subtitle = "Maior pico indica k ideal")
+
+p2 <- fviz_nbclust(dados_scaled, FUNcluster = kmeans, method = "silhouette", k.max = k_max) +labs(title = "Silhueta Média - Hierárquico",
+        subtitle = "Maior pico indica k ideal")
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+## Clustering hierarquico
+Calcumos a matriz de distancia euclidiana e aplicamos o agrupamento hierarquico aglometatico com ligaca de ward
+
+```{r}
+k_escolhido <- 5
+
+dist_mat <- dist(dados_scaled, method = "euclidean")
+
+hc_model <- hclust(dist_mat, method = "ward.D2")
+clusters_hc <- cutree(hc_model, k = k_escolhido)
+
+fviz_dend(hc_model, k = k_escolhido,
+          cex = 0.5,
+          k_colors = "jco",
+          rect = T,
+          rect_fill = F,
+          main = paste("Dendograma - Ward.D2 (k=", k_escolhido, ")"))
+```
+
+```{r}
+k_escolhido <- 4
+
+dist_mat <- dist(dados_scaled, method = "euclidean")
+
+hc_model <- hclust(dist_mat, method = "ward.D2")
+clusters_hc <- cutree(hc_model, k = k_escolhido)
+
+fviz_dend(hc_model, k = k_escolhido,
+          cex = 0.5,
+          k_colors = "jco",
+          rect = T,
+          rect_fill = F,
+          main = paste("Dendograma - Ward.D2 (k=", k_escolhido, ")"))
+```
+
+```{r}
+# validacao por silhueta
+sil_hc <- silhouette(clusters_hc, dist_mat)
+fviz_silhouette(sil_hc, palette = "jco") + 
+  labs(title = paste("Gráfico de Silhouette - Hierarquico (Média =", round(mean(sil_hc[, 3]), 3), ")"))
+```
+## Clustering KMeans
+executamos o kemans com nstart = 25 inicializacoes aleatorias diferentes, para evitar minimos locais e garantir estabilidade
+
+```{r}
+set.seed(2)
+km_model <- kmeans(dados_scaled, centers = k_escolhido, nstart = 25)
+clusters_km <- km_model$cluster
+
+# visu dos clusters nos planos pca
+fviz_cluster(km_model, data = dados_scaled,
+             palette = "jco", 
+             ellipse.type = "convex",
+             repel = TRUE,
+             ggtheme = theme_minimal(),
+             main = paste("Clusters KMeans - Projecao PCA (K =", k_escolhido, ")"))
+
+```
+
+```{r}
+# validacao por silhueta
+sil_km <- silhouette(clusters_km, dist_mat)
+fviz_silhouette(sil_km, palette = "jco") + 
+  labs(title = paste("Gráfico de Silhouette - K-Means (Média =", round(mean(sil_km[, 3]), 3), ")"))
+```
+```{r}
+
+```
+
