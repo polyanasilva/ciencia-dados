@@ -1,0 +1,107 @@
+---
+title: "Untitled"
+author: 'Professor: Gilderlanio Santana'
+date: "2026-11-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Benchamark SOFA
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(rpart.plot)
+library(knitr)
+library(kableExtra)
+library(rsample)
+library(recipes)
+library(parsnip)
+
+set.seed(2026)
+```
+
+## Carregamento do Dataset
+```{r}
+df <- read_csv("data/SOFA_db.csv")
+df
+```
+
+## Preparamento do dataset
+
+```{r}
+df <- df[df$Classificacao %in% c("Controlada", "Grave"), ]
+
+df <- df %>% 
+  mutate(
+    Classificacao = factor(
+      Classificacao,
+      levels = c("Controlada", "Grave")
+    )
+  ) %>% 
+  select(-any_of("ID"))
+
+df
+```
+
+```{r}
+# para visualizar a estrutura do dado
+glimpse(df)
+```
+Podemos notar que restaram 487 rows, como vimos no dataset anterior tinha apenas 13 amostras de Muito Grave, dessa forma vemos q ta ok
+
+```{r}
+# distribuicao de classes
+table(df$Classificacao)
+```
+Classes balanceadas na medida do possivel, porem se quiser fazer um oversampling ou undersampling dá pra ta fazendo
+
+## Divisao Treino/Teste
+precisamos fazer a normalizacao e selecao de features depois[
+nesse momento vamos fazer a divisao de 75% com k = 5 de forma estratificada
+
+```{r}
+# Divisao em treino e teste
+split_dados <- initial_split(df, prop=0.75, strata=Classificacao)
+treino <- training(split_dados)
+teste <- testing(split_dados)
+
+# validacao cruzada (5 fold estratificado)
+folds <- vfold_cv(treino, v = 5, strata = Classificacao)
+
+# Receita de pre-processamento
+receita_base <- recipe(Classificacao ~., data = treino) %>% 
+  step_zv(all_prediction()) %>% 
+  step_normalize(all_numeric_predictors())
+
+```
+
+## Especificacoes dos modelos
+```{r}
+# 1. CART (Arvore de decisao)
+spec_cart <- decision_tree(
+  cost_complexity = 0.1,
+  tree_depth = 10,
+  min_n = 5
+) %>%  
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+# 2, Random Forest
+spec_rf <- rand_forest(
+  trees = 50,
+  mtry = 4,
+  min_n = 5
+) %>% 
+  set_engine("ranger", importace = "impurity") %>% 
+  set_mode("classification")
+
+# 3. SVM 
+```
+
+
+fazer um pca extrair os 3 componentes principais e treinar o modelo
+
