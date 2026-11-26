@@ -1,0 +1,7 @@
+"","gene","tipo","amostra_controle","amostra_tratada","p_valor"
+"1","TP53","Supressor",10.2,15.8,0.001
+"2","BRCA1","Supressor",8.5,8.8,0.45
+"3","EGFR","Oncogene",14.1,18.9,0.003
+"4","MYC","Oncogene",12,11.8,0.82
+"5","GAPDH","Housekeeping",22.1,22,0.91
+"6","ACTB","Housekeeping",25,24.8,0.78
